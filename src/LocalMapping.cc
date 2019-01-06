@@ -167,7 +167,7 @@ void LocalMapping::ProcessNewKeyFrame()
     mpMap->AddKeyFrame(mpCurrentKeyFrame);
 }
 
-void LocalMapping::MapPointCulling()
+void LocalMapping::MapPointCulling()   //地图点剔除（或者说地图点挑选）
 {
     // Check Recent Added MapPoints
     list<MapPoint*>::iterator lit = mlpRecentAddedMapPoints.begin();

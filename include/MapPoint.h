@@ -36,7 +36,7 @@ class Map;
 class Frame;
 
 
-class MapPoint
+class MapPoint        //一个MapPoint类只会保存对于同一个关键点的所有信息，当保存信息完毕，就会加入到Map中。而整个系统Map只有一个，Mappoint却有很多很多个。
 {
 public:
     MapPoint(const cv::Mat &Pos, KeyFrame* pRefKF, Map* pMap);

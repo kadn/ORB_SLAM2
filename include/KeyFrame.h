@@ -118,17 +118,17 @@ public:
 
 
     // The following variables are accesed from only 1 thread or never change (no mutex needed).
-public:
+public:                                   //在 DetectLoop中用到了的变量
 
-    static long unsigned int nNextId;
-    long unsigned int mnId;
-    const long unsigned int mnFrameId;
+    static long unsigned int nNextId;    //通过调试发现，这个值是 当前关键帧的GetVectorCovisibleKeyFrames中的成员都有的，他们都一样，似乎是在说下一帧的frameid(因为这个是静态的成员)
+    long unsigned int mnId;            //这个就是当前的关键帧的在所有关键帧中id
+    const long unsigned int mnFrameId;  //在frame中的id
 
     const double mTimeStamp;
 
     // Grid (to speed up feature matching)
-    const int mnGridCols;
-    const int mnGridRows;
+    const int mnGridCols;     //64
+    const int mnGridRows;     //48
     const float mfGridElementWidthInv;
     const float mfGridElementHeightInv;
 
@@ -141,8 +141,8 @@ public:
     long unsigned int mnBAFixedForKF;
 
     // Variables used by the keyframe database
-    long unsigned int mnLoopQuery;
-    int mnLoopWords;
+    long unsigned int mnLoopQuery;         //这个mnLoopQuery就是用于记录pKF的mnId复制给pKFi， 条件是pKFi与pKF没有连接但是有共同的词向量
+    int mnLoopWords;                       //这个mnLoopWords记录了某一关键帧pKFi与当前关键帧相同的单词数量，用于后面使用。
     float mLoopScore;
     long unsigned int mnRelocQuery;
     int mnRelocWords;

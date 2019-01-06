@@ -78,33 +78,38 @@ vector<KeyFrame*> KeyFrameDatabase::DetectLoopCandidates(KeyFrame* pKF, float mi
     set<KeyFrame*> spConnectedKeyFrames = pKF->GetConnectedKeyFrames();
     list<KeyFrame*> lKFsSharingWords;
 
+    //for debug
+    if(pKF->mnId == 28)
+    {
+        std::cout << "this is for debug! " << std::endl;
+    }
     // Search all keyframes that share a word with current keyframes
     // Discard keyframes connected to the query keyframe
     {
         unique_lock<mutex> lock(mMutex);
 
-        for(DBoW2::BowVector::const_iterator vit=pKF->mBowVec.begin(), vend=pKF->mBowVec.end(); vit != vend; vit++)
+        for(DBoW2::BowVector::const_iterator vit=pKF->mBowVec.begin(), vend=pKF->mBowVec.end(); vit != vend; vit++)  //遍历该关键帧的词向量
         {
-            list<KeyFrame*> &lKFs =   mvInvertedFile[vit->first];
+            list<KeyFrame*> &lKFs =   mvInvertedFile[vit->first];   //查找关键帧的词向量的每一位 所记录的关键帧列表。
 
             for(list<KeyFrame*>::iterator lit=lKFs.begin(), lend= lKFs.end(); lit!=lend; lit++)
             {
-                KeyFrame* pKFi=*lit;
-                if(pKFi->mnLoopQuery!=pKF->mnId)
+                KeyFrame* pKFi=*lit;   //pKFi是这个列表中的关键帧的指针
+                if(pKFi->mnLoopQuery!=pKF->mnId)   //如果这个帧的查询不是pKF的id，那么就添加一下。
                 {
                     pKFi->mnLoopWords=0;
-                    if(!spConnectedKeyFrames.count(pKFi))
+                    if(!spConnectedKeyFrames.count(pKFi))   //set 中 count()获取该元素的个数,只可能是0或是1. 当没有连接时，进行下面的操作
                     {
-                        pKFi->mnLoopQuery=pKF->mnId;
-                        lKFsSharingWords.push_back(pKFi);
+                        pKFi->mnLoopQuery=pKF->mnId;     //这个mnLoopQuery就是用于记录pKF， 条件是pKFi与pKF没有连接但是有共同的词向量的帧
+                        lKFsSharingWords.push_back(pKFi);   //lKFsSharingWords存储了没有连接的pKFi。
                     }
                 }
-                pKFi->mnLoopWords++;
+                pKFi->mnLoopWords++;      //这个mnLoopWords记录了某一关键帧与当前关键帧相同的单词数量，用于后面使用。
             }
         }
     }
 
-    if(lKFsSharingWords.empty())
+    if(lKFsSharingWords.empty())    //lKFsSharingWords是指不相连但是具有相同词向量的关键帧的list集合
         return vector<KeyFrame*>();
 
     list<pair<float,KeyFrame*> > lScoreAndMatch;
@@ -133,11 +138,10 @@ vector<KeyFrame*> KeyFrameDatabase::DetectLoopCandidates(KeyFrame* pKF, float mi
             float si = mpVoc->score(pKF->mBowVec,pKFi->mBowVec);
 
             pKFi->mLoopScore = si;
-            if(si>=minScore)
+            if(si>=minScore)           //这个minScore是从上层函数比较中获得的，其含义是vpConnectedKeyFrames中的所有keyframe与当前keyframe的比较结果
                 lScoreAndMatch.push_back(make_pair(si,pKFi));
         }
     }
-
     if(lScoreAndMatch.empty())
         return vector<KeyFrame*>();
 
@@ -148,7 +152,7 @@ vector<KeyFrame*> KeyFrameDatabase::DetectLoopCandidates(KeyFrame* pKF, float mi
     for(list<pair<float,KeyFrame*> >::iterator it=lScoreAndMatch.begin(), itend=lScoreAndMatch.end(); it!=itend; it++)
     {
         KeyFrame* pKFi = it->second;
-        vector<KeyFrame*> vpNeighs = pKFi->GetBestCovisibilityKeyFrames(10);
+        vector<KeyFrame*> vpNeighs = pKFi->GetBestCovisibilityKeyFrames(10);  //得到这个结果附近的关键帧总共10个
 
         float bestScore = it->first;
         float accScore = it->first;

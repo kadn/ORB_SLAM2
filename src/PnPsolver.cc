@@ -981,6 +981,7 @@ void PnPsolver::relative_error(double & rot_err, double & transl_err,
     sqrt(ttrue[0] * ttrue[0] + ttrue[1] * ttrue[1] + ttrue[2] * ttrue[2]);
 }
 
+//https://blog.csdn.net/lql0716/article/details/72597719
 void PnPsolver::mat_to_quat(const double R[3][3], double q[4])
 {
   double tr = R[0][0] + R[1][1] + R[2][2];

@@ -257,7 +257,7 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp)
     }
     }
 
-    cv::Mat Tcw = mpTracker->GrabImageMonocular(im,timestamp);
+    cv::Mat Tcw = mpTracker->GrabImageMonocular(im,timestamp);   //获取了非常多的信息，包括地图构建的所有需要的东西
 
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;

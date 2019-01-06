@@ -302,7 +302,7 @@ void Tracking::Track()
             if(mState==OK)
             {
                 // Local Mapping might have changed some MapPoints tracked in last frame
-                CheckReplacedInLastFrame();
+                CheckReplacedInLastFrame();          //这个说明 localMapping会改变关键点的信息
 
                 if(mVelocity.empty() || mCurrentFrame.mnId<mnLastRelocFrameId+2)
                 {
@@ -627,7 +627,7 @@ void Tracking::MonocularInitialization()
             cv::Mat Tcw = cv::Mat::eye(4,4,CV_32F);
             Rcw.copyTo(Tcw.rowRange(0,3).colRange(0,3));
             tcw.copyTo(Tcw.rowRange(0,3).col(3));
-            mCurrentFrame.SetPose(Tcw);
+            mCurrentFrame.SetPose(Tcw);                           //初始化完成了很重要的一步了，求出了从初始化帧到当前帧的Tcw。初始化帧和当前帧的id相差1.
 
             CreateInitialMapMonocular();
         }
@@ -637,7 +637,7 @@ void Tracking::MonocularInitialization()
 void Tracking::CreateInitialMapMonocular()
 {
     // Create KeyFrames
-    KeyFrame* pKFini = new KeyFrame(mInitialFrame,mpMap,mpKeyFrameDB);
+    KeyFrame* pKFini = new KeyFrame(mInitialFrame,mpMap,mpKeyFrameDB);    //要生成关键帧给地图，同时计算关键点。在这之前地图里什么都没有
     KeyFrame* pKFcur = new KeyFrame(mCurrentFrame,mpMap,mpKeyFrameDB);
 
 
@@ -659,25 +659,25 @@ void Tracking::CreateInitialMapMonocular()
 
         MapPoint* pMP = new MapPoint(worldPos,pKFcur,mpMap);
 
-        pKFini->AddMapPoint(pMP,i);
+        pKFini->AddMapPoint(pMP,i);                       //将同一个关键点对应于前后两帧的信息分别存储在两帧之中。记录在mvpMapPoints中
         pKFcur->AddMapPoint(pMP,mvIniMatches[i]);
 
-        pMP->AddObservation(pKFini,i);
+        pMP->AddObservation(pKFini,i);                    //将关键点对应的前后两帧以及在前后两帧的位置记录下来，记录在 mObservations中。
         pMP->AddObservation(pKFcur,mvIniMatches[i]);
 
-        pMP->ComputeDistinctiveDescriptors();
-        pMP->UpdateNormalAndDepth();
+        pMP->ComputeDistinctiveDescriptors();        //计算出来
+        pMP->UpdateNormalAndDepth();                //这个关键空间点包含了它当初是从哪一层金字塔中提取出来的，重新计算深度可能需要这个信息？？？？
 
         //Fill Current Frame structure
-        mCurrentFrame.mvpMapPoints[mvIniMatches[i]] = pMP;
-        mCurrentFrame.mvbOutlier[mvIniMatches[i]] = false;
+        mCurrentFrame.mvpMapPoints[mvIniMatches[i]] = pMP;   //将关键点信息也加入到CurrentFrame之中, 在updateconnections之间有很大的用处
+        mCurrentFrame.mvbOutlier[mvIniMatches[i]] = false;  //应该是描述关键点是否在自己的图片之外的变量
 
         //Add to Map
-        mpMap->AddMapPoint(pMP);
+        mpMap->AddMapPoint(pMP);                  //经过上面的一系列操作，终于将这个点加入到地图之中，同时，这个点也被销毁
     }
 
     // Update Connections
-    pKFini->UpdateConnections();
+    pKFini->UpdateConnections();           //将具有一定条件的其他关键帧添加到这个关键帧的mConnectedKeyFrameWeights之中
     pKFcur->UpdateConnections();
 
     // Bundle Adjustment
@@ -708,7 +708,7 @@ void Tracking::CreateInitialMapMonocular()
         if(vpAllMapPoints[iMP])
         {
             MapPoint* pMP = vpAllMapPoints[iMP];
-            pMP->SetWorldPos(pMP->GetWorldPos()*invMedianDepth);
+            pMP->SetWorldPos(pMP->GetWorldPos()*invMedianDepth);        //更新一下深度信息
         }
     }
 
@@ -729,7 +729,7 @@ void Tracking::CreateInitialMapMonocular()
 
     mpMap->SetReferenceMapPoints(mvpLocalMapPoints);
 
-    mpMapDrawer->SetCurrentCameraPose(pKFcur->GetPose());
+    mpMapDrawer->SetCurrentCameraPose(pKFcur->GetPose());    //设置Drawer的摄像头方向
 
     mpMap->mvpKeyFrameOrigins.push_back(pKFini);
 
@@ -764,15 +764,15 @@ bool Tracking::TrackReferenceKeyFrame()
     ORBmatcher matcher(0.7,true);
     vector<MapPoint*> vpMapPointMatches;
 
-    int nmatches = matcher.SearchByBoW(mpReferenceKF,mCurrentFrame,vpMapPointMatches);
+    int nmatches = matcher.SearchByBoW(mpReferenceKF,mCurrentFrame,vpMapPointMatches); //通过BoWVec中的相似的特征点的距离是否小于阈值来判断是否可以将这个点作为待匹配点。之后还需要进行准确匹配？
 
     if(nmatches<15)
         return false;
 
-    mCurrentFrame.mvpMapPoints = vpMapPointMatches;
+    mCurrentFrame.mvpMapPoints = vpMapPointMatches;        //看起来非常草率
     mCurrentFrame.SetPose(mLastFrame.mTcw);
 
-    Optimizer::PoseOptimization(&mCurrentFrame);
+    Optimizer::PoseOptimization(&mCurrentFrame);       //这里面很复杂
 
     // Discard outliers
     int nmatchesMap = 0;

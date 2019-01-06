@@ -1,9 +1,13 @@
 cmake_minimum_required(VERSION 2.8)
 project(ORB_SLAM2)
 
+SET(CMAKE_BUILD_TYPE Debug)
+
 IF(NOT CMAKE_BUILD_TYPE)
-  SET(CMAKE_BUILD_TYPE Release)
+    SET(CMAKE_BUILD_TYPE Release)
 ENDIF()
+
+#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 
 MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
 
@@ -68,7 +72,7 @@ src/KeyFrameDatabase.cc
 src/Sim3Solver.cc
 src/Initializer.cc
 src/Viewer.cc
-)
+Examples/mat.cpp)
 
 target_link_libraries(${PROJECT_NAME}
 ${OpenCV_LIBS}
@@ -79,6 +83,8 @@ ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
 )
 
 # Build examples
+add_executable(mat ${PROJECT_SOURCE_DIR}/Examples/mat.cpp)
+target_link_libraries(mat ${OpenCV_LIBS})
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/RGB-D)
 

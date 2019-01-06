@@ -68,7 +68,7 @@ void LoopClosing::Run()
             {
                // Compute similarity transformation [sR|t]
                // In the stereo/RGBD case s=1
-               if(ComputeSim3())
+               if(ComputeSim3())    //sim3  其实是 7个变量的李代数，除了位姿6个变量，还包含了尺度因子s
                {
                    // Perform loop fusion and pose graph optimization
                    CorrectLoop();
@@ -123,6 +123,11 @@ bool LoopClosing::DetectLoop()
     // We will impose loop candidates to have a higher similarity than this
     const vector<KeyFrame*> vpConnectedKeyFrames = mpCurrentKF->GetVectorCovisibleKeyFrames();
     const DBoW2::BowVector &CurrentBowVec = mpCurrentKF->mBowVec;
+
+    std::cout << "vpConnectedKeyFrames[0]->mvKeys.size() = " <<  vpConnectedKeyFrames[0]->mvKeys.size() << std::endl; //result : 2004 //不是定值
+    std::cout << " CurrentBowVec.size() = " << CurrentBowVec.size() << std::endl;   // result : 1966 //不是一个定值
+
+
     float minScore = 1;
     for(size_t i=0; i<vpConnectedKeyFrames.size(); i++)
     {

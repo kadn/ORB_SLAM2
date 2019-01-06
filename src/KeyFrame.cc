@@ -45,7 +45,7 @@ KeyFrame::KeyFrame(Frame &F, Map *pMap, KeyFrameDatabase *pKFDB):
 {
     mnId=nNextId++;
 
-    mGrid.resize(mnGridCols);
+    mGrid.resize(mnGridCols);                      //从这里可以看到这是个栅格地图。
     for(int i=0; i<mnGridCols;i++)
     {
         mGrid[i].resize(mnGridRows);
@@ -294,7 +294,7 @@ void KeyFrame::UpdateConnections()
 
     {
         unique_lock<mutex> lockMPs(mMutexFeatures);
-        vpMP = mvpMapPoints;
+        vpMP = mvpMapPoints;       //关键帧上面的所有关键点
     }
 
     //For all map points in keyframe check in which other keyframes are they seen
@@ -309,13 +309,13 @@ void KeyFrame::UpdateConnections()
         if(pMP->isBad())
             continue;
 
-        map<KeyFrame*,size_t> observations = pMP->GetObservations();
+        map<KeyFrame*,size_t> observations = pMP->GetObservations(); //得到关键点所相关联的关键帧
 
         for(map<KeyFrame*,size_t>::iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
         {
-            if(mit->first->mnId==mnId)
+            if(mit->first->mnId==mnId)   //这个说明是同一帧关键帧
                 continue;
-            KFcounter[mit->first]++;
+            KFcounter[mit->first]++;         //遍历下来也就会记录跟这个关键帧有关联的关键帧都会被保存在map<KeyFrame*,int> KFcounter之中，同时记录联系的数量有多少
         }
     }
 
@@ -341,14 +341,14 @@ void KeyFrame::UpdateConnections()
         if(mit->second>=th)
         {
             vPairs.push_back(make_pair(mit->second,mit->first));
-            (mit->first)->AddConnection(this,mit->second);
+            (mit->first)->AddConnection(this,mit->second);               //将相同关键点数量大于15的关键帧记作当前帧的一个连接, 保存在当前关键帧的 mConnectedKeyFrameWeights中
         }
     }
 
     if(vPairs.empty())
     {
         vPairs.push_back(make_pair(nmax,pKFmax));
-        pKFmax->AddConnection(this,nmax);
+        pKFmax->AddConnection(this,nmax);    //如果没有相连超过15个关键点的关键帧出现，就把数量最大的那个保存到 mConnectedKeyFrameWeights 中。
     }
 
     sort(vPairs.begin(),vPairs.end());
@@ -364,7 +364,7 @@ void KeyFrame::UpdateConnections()
         unique_lock<mutex> lockCon(mMutexConnections);
 
         // mspConnectedKeyFrames = spConnectedKeyFrames;
-        mConnectedKeyFrameWeights = KFcounter;
+        mConnectedKeyFrameWeights = KFcounter;                //这里有很多疑问？？？？？？为什么还要进行这个操作？？？？
         mvpOrderedConnectedKeyFrames = vector<KeyFrame*>(lKFs.begin(),lKFs.end());
         mvOrderedWeights = vector<int>(lWs.begin(), lWs.end());
 

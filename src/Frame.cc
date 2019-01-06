@@ -258,12 +258,12 @@ void Frame::SetPose(cv::Mat Tcw)
     UpdatePoseMatrices();
 }
 
-void Frame::UpdatePoseMatrices()
+void Frame::UpdatePoseMatrices()      // update these variables
 { 
     mRcw = mTcw.rowRange(0,3).colRange(0,3);
-    mRwc = mRcw.t();
-    mtcw = mTcw.rowRange(0,3).col(3);
-    mOw = -mRcw.t()*mtcw;
+    mRwc = mRcw.t();                  // mRwc means R(BA)    world to camera
+    mtcw = mTcw.rowRange(0,3).col(3); // mtcw = t in A      t(AB) in A
+    mOw = -mRcw.t()*mtcw;             // mRcw = t in B      t(BA) in B
 }
 
 bool Frame::isInFrustum(MapPoint *pMP, float viewingCosLimit)

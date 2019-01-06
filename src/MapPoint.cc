@@ -250,7 +250,7 @@ void MapPoint::ComputeDistinctiveDescriptors()
         unique_lock<mutex> lock1(mMutexFeatures);
         if(mbBad)
             return;
-        observations=mObservations;
+        observations=mObservations;           //observations 保留了 同一个关键点在多个相匹配的关键帧的位置关系。
     }
 
     if(observations.empty())
@@ -260,17 +260,17 @@ void MapPoint::ComputeDistinctiveDescriptors()
 
     for(map<KeyFrame*,size_t>::iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
     {
-        KeyFrame* pKF = mit->first;
+        KeyFrame* pKF = mit->first;       // mit->first 表示关键点对应的哪一帧， mit->second表示这个关键点在这一帧上的位置
 
         if(!pKF->isBad())
-            vDescriptors.push_back(pKF->mDescriptors.row(mit->second));
+            vDescriptors.push_back(pKF->mDescriptors.row(mit->second));     //求出了这个特征点在这个关键帧上的描述子
     }
 
     if(vDescriptors.empty())
         return;
 
     // Compute distances between them
-    const size_t N = vDescriptors.size();
+    const size_t N = vDescriptors.size();    //初始化时是2帧。但在以后可能会在检测过程中重新看到这个点，于是就有可能有N个帧看到这同一个关键点。
 
     float Distances[N][N];
     for(size_t i=0;i<N;i++)
@@ -278,7 +278,7 @@ void MapPoint::ComputeDistinctiveDescriptors()
         Distances[i][i]=0;
         for(size_t j=i+1;j<N;j++)
         {
-            int distij = ORBmatcher::DescriptorDistance(vDescriptors[i],vDescriptors[j]);
+            int distij = ORBmatcher::DescriptorDistance(vDescriptors[i],vDescriptors[j]);  //即使是同一个特征点，在不同图上的描述子由于角度不同等因素距离也不是0
             Distances[i][j]=distij;
             Distances[j][i]=distij;
         }
@@ -289,7 +289,7 @@ void MapPoint::ComputeDistinctiveDescriptors()
     int BestIdx = 0;
     for(size_t i=0;i<N;i++)
     {
-        vector<int> vDists(Distances[i],Distances[i]+N);
+        vector<int> vDists(Distances[i],Distances[i]+N);  //就是第i行的第一个数和第i+1行的第一个数
         sort(vDists.begin(),vDists.end());
         int median = vDists[0.5*(N-1)];
 
@@ -302,7 +302,7 @@ void MapPoint::ComputeDistinctiveDescriptors()
 
     {
         unique_lock<mutex> lock(mMutexFeatures);
-        mDescriptor = vDescriptors[BestIdx].clone();
+        mDescriptor = vDescriptors[BestIdx].clone();            //保存了最好的描述子
     }
 }
 
@@ -337,7 +337,7 @@ void MapPoint::UpdateNormalAndDepth()
         unique_lock<mutex> lock2(mMutexPos);
         if(mbBad)
             return;
-        observations=mObservations;
+        observations=mObservations;          //获取关键点所对应的关键帧们
         pRefKF=mpRefKF;
         Pos = mWorldPos.clone();
     }
