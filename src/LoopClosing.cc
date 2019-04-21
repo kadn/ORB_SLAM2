@@ -31,6 +31,8 @@
 #include<mutex>
 #include<thread>
 
+//检测回环的过程，推荐阅读 https://blog.csdn.net/zhengbq_seu/article/details/82501230
+// https://blog.csdn.net/Georce_cas/article/details/78709497
 
 namespace ORB_SLAM2
 {

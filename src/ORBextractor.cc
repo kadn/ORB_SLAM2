@@ -103,7 +103,7 @@ static float IC_Angle(const Mat& image, Point2f pt,  const vector<int> & u_max)
     return fastAtan2((float)m_01, (float)m_10);
 }
 
-
+//计算不同词向量之间的距离相似度
 const float factorPI = (float)(CV_PI/180.f);
 static void computeOrbDescriptor(const KeyPoint& kpt,
                                  const Mat& img, const Point* pattern,
@@ -147,7 +147,7 @@ static void computeOrbDescriptor(const KeyPoint& kpt,
     #undef GET_VALUE
 }
 
-
+//brief中提到的需要随机生成256对点
 static int bit_pattern_31_[256*4] =
 {
     8,-3, 9,5/*mean (0), correlation (0)*/,
@@ -407,7 +407,7 @@ static int bit_pattern_31_[256*4] =
     7,0, 12,-2/*mean (0.127002), correlation (0.537452)*/,
     -1,-6, 0,-11/*mean (0.127148), correlation (0.547401)*/
 };
-
+//金字塔构造
 ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
          int _iniThFAST, int _minThFAST):
     nfeatures(_nfeatures), scaleFactor(_scaleFactor), nlevels(_nlevels),

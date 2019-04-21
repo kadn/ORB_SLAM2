@@ -85,7 +85,7 @@ void KeyFrame::SetPose(const cv::Mat &Tcw_)
 
 cv::Mat KeyFrame::GetPose()
 {
-    unique_lock<mutex> lock(mMutexPose);
+    unique_lock<mutex> lock(mMutexPose);   //锁 会在这个函数结束后自动释放掉，  lock使用 互斥量初始化
     return Tcw.clone();
 }
 

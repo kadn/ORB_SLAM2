@@ -18,6 +18,8 @@
 * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
 */
 
+//相关博客  https://blog.csdn.net/qq_37611824/article/details/86311774
+// 参考论文 http://people.csail.mit.edu/bkph/papers/Absolute_Orientation.pdf
 
 #include "Sim3Solver.h"
 
@@ -212,7 +214,7 @@ cv::Mat Sim3Solver::find(vector<bool> &vbInliers12, int &nInliers)
     return iterate(mRansacMaxIts,bFlag,vbInliers12,nInliers);
 }
 
-void Sim3Solver::ComputeCentroid(cv::Mat &P, cv::Mat &Pr, cv::Mat &C)
+void Sim3Solver::ComputeCentroid(cv::Mat &P, cv::Mat &Pr, cv::Mat &C)   //centroid 质心
 {
     cv::reduce(P,C,1,CV_REDUCE_SUM);
     C = C/P.cols;

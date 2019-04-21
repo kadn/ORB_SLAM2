@@ -17,7 +17,7 @@
 * You should have received a copy of the GNU General Public License
 * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
 */
-
+//  tracking的过程可参考 https://blog.csdn.net/u010128736/article/details/53339311
 
 #include "Tracking.h"
 
@@ -298,7 +298,10 @@ void Tracking::Track()
         {
             // Local Mapping is activated. This is the normal behaviour, unless
             // you explicitly activate the "only tracking" mode.
-
+            /*如果速度为空， 使用 referenceKeyFrame 模式， 使用上一帧位姿 初始化， 然后g2o优化
+             * 否则使用速度模式，如果不行，使用 referenceKeyFrame 模式， 速度模式使用估计的位姿初始化，然后优化
+             * 如果还是不行，使用 relocalization 模式， 这个会调用 PnP
+            */
             if(mState==OK)
             {
                 // Local Mapping might have changed some MapPoints tracked in last frame
@@ -770,9 +773,9 @@ bool Tracking::TrackReferenceKeyFrame()
         return false;
 
     mCurrentFrame.mvpMapPoints = vpMapPointMatches;        //看起来非常草率
-    mCurrentFrame.SetPose(mLastFrame.mTcw);
+    mCurrentFrame.SetPose(mLastFrame.mTcw);        //直接把上一帧结果当成初始化对象
 
-    Optimizer::PoseOptimization(&mCurrentFrame);       //这里面很复杂
+    Optimizer::PoseOptimization(&mCurrentFrame);       //这里面添加顶点和边，得到优化后的结果,这里仅仅使用两个关键帧位姿以及他们相匹配的点来进行优化
 
     // Discard outliers
     int nmatchesMap = 0;
@@ -872,7 +875,7 @@ bool Tracking::TrackWithMotionModel()
     // Create "visual odometry" points if in Localization Mode
     UpdateLastFrame();
 
-    mCurrentFrame.SetPose(mVelocity*mLastFrame.mTcw);
+    mCurrentFrame.SetPose(mVelocity*mLastFrame.mTcw);   //设置一个估计的速度值，然后优化
 
     fill(mCurrentFrame.mvpMapPoints.begin(),mCurrentFrame.mvpMapPoints.end(),static_cast<MapPoint*>(NULL));
 

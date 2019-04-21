@@ -48,6 +48,9 @@
 *   either expressed or implied, of the FreeBSD Project
 */
 
+//一个介绍EPnP的博客，里面有论文地址  https://blog.csdn.net/u010821666/article/details/80738359
+// PnPsolver似乎只在 relocalization代码中用到了，并没有用到 tracking 过程中
+
 #include <iostream>
 
 #include "PnPsolver.h"

@@ -236,6 +236,8 @@ void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<M
 
 }
 
+//使用 g2o的优化器来优化结果， 最后得到了图模型的第一个顶点的优化结果，并调用  pFrame->SetPose(pose);
+//优化使用了两个关键帧，同时有多个匹配点
 int Optimizer::PoseOptimization(Frame *pFrame)
 {
     g2o::SparseOptimizer optimizer;
