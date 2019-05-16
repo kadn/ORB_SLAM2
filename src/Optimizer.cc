@@ -33,7 +33,7 @@
 #include "Converter.h"
 
 #include<mutex>
-
+//泡泡机器人出版的pdf对这一部分有详细介绍
 namespace ORB_SLAM2
 {
 
@@ -45,7 +45,7 @@ void Optimizer::GlobalBundleAdjustemnt(Map* pMap, int nIterations, bool* pbStopF
     BundleAdjustment(vpKFs,vpMP,nIterations,pbStopFlag, nLoopKF, bRobust);
 }
 
-
+//使用  关键帧和 MapPoints 来进行 3D-2D的优化，误差是 3D点在不同相机上的投影，这是一个2D结果，与原2D的误差是误差项
 void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<MapPoint *> &vpMP,
                                  int nIterations, bool* pbStopFlag, const unsigned long nLoopKF, const bool bRobust)
 {
@@ -68,6 +68,7 @@ void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<M
     long unsigned int maxKFid = 0;
 
     // Set KeyFrame vertices
+    // 把相机位姿当做图优化的顶点
     for(size_t i=0; i<vpKFs.size(); i++)
     {
         KeyFrame* pKF = vpKFs[i];
@@ -86,6 +87,7 @@ void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<M
     const float thHuber3D = sqrt(7.815);
 
     // Set MapPoint vertices
+    //把 世界点作为 图优化的顶点， 同时对于每一个点，其可以投射到不同的关键帧上，从而和原来以为的位置有误差，这个误差就是误差项
     for(size_t i=0; i<vpMP.size(); i++)
     {
         MapPoint* pMP = vpMP[i];
@@ -97,8 +99,8 @@ void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<M
         vPoint->setId(id);
         vPoint->setMarginalized(true);
         optimizer.addVertex(vPoint);
-
-       const map<KeyFrame*,size_t> observations = pMP->GetObservations();
+        //对于一个MapPoint,可以观察到该点的关键帧不止一个，求出所有，然后计算在这些关键帧上面的(u,v)与原以为的误差，作为误差项
+        const map<KeyFrame*,size_t> observations = pMP->GetObservations();
 
         int nEdges = 0;
         //SET EDGES
@@ -111,9 +113,9 @@ void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<M
 
             nEdges++;
 
-            const cv::KeyPoint &kpUn = pKF->mvKeysUn[mit->second];
+            const cv::KeyPoint &kpUn = pKF->mvKeysUn[mit->second];  //原始位置， 投影位置是由g2o算的，这需要相机参数，所以后面有写
 
-            if(pKF->mvuRight[mit->second]<0)
+            if(pKF->mvuRight[mit->second]<0)  //对应单目情况， pKF->mvuRight[mit->second]应该指的是深度
             {
                 Eigen::Matrix<double,2,1> obs;
                 obs << kpUn.pt.x, kpUn.pt.y;
@@ -132,7 +134,7 @@ void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<M
                     e->setRobustKernel(rk);
                     rk->setDelta(thHuber2D);
                 }
-
+                //每一个关键帧的  相机参数，对于单目相机其实参数一样，对于双目就不一样
                 e->fx = pKF->fx;
                 e->fy = pKF->fy;
                 e->cx = pKF->cx;
@@ -140,7 +142,7 @@ void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<M
 
                 optimizer.addEdge(e);
             }
-            else
+            else  //双目或者立体，因为包含了深度信息
             {
                 Eigen::Matrix<double,3,1> obs;
                 const float kp_ur = pKF->mvuRight[mit->second];
@@ -237,7 +239,7 @@ void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<M
 }
 
 //使用 g2o的优化器来优化结果， 最后得到了图模型的第一个顶点的优化结果，并调用  pFrame->SetPose(pose);
-//优化使用了两个关键帧，同时有多个匹配点
+//优化使用了本关键帧和周围的MapPoints，类似于上面的函数，但不同之处在于这里只有一个关键帧
 int Optimizer::PoseOptimization(Frame *pFrame)
 {
     g2o::SparseOptimizer optimizer;
@@ -468,7 +470,7 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
         if(!pKFi->isBad())
             lLocalKeyFrames.push_back(pKFi);
     }
-
+    //先把共视图的帧包含的MapPoints push back进来
     // Local MapPoints seen in Local KeyFrames
     list<MapPoint*> lLocalMapPoints;
     for(list<KeyFrame*>::iterator lit=lLocalKeyFrames.begin() , lend=lLocalKeyFrames.end(); lit!=lend; lit++)
@@ -486,7 +488,7 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
                     }
         }
     }
-
+    //再利用上面的点的共视帧来组成 lFixedCameras
     // Fixed Keyframes. Keyframes that see Local MapPoints but that are not Local Keyframes
     list<KeyFrame*> lFixedCameras;
     for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++)
@@ -525,6 +527,7 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
     for(list<KeyFrame*>::iterator lit=lLocalKeyFrames.begin(), lend=lLocalKeyFrames.end(); lit!=lend; lit++)
     {
         KeyFrame* pKFi = *lit;
+        //SE3表示位姿
         g2o::VertexSE3Expmap * vSE3 = new g2o::VertexSE3Expmap();
         vSE3->setEstimate(Converter::toSE3Quat(pKFi->GetPose()));
         vSE3->setId(pKFi->mnId);
@@ -573,6 +576,7 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
 
     for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++)
     {
+        //顶点都有的函数   setEstimate    setId  setMarginalized
         MapPoint* pMP = *lit;
         g2o::VertexSBAPointXYZ* vPoint = new g2o::VertexSBAPointXYZ();
         vPoint->setEstimate(Converter::toVector3d(pMP->GetWorldPos()));
@@ -609,7 +613,7 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
                     g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
                     e->setRobustKernel(rk);
                     rk->setDelta(thHuberMono);
-
+                    //这个 e包含了相机参数
                     e->fx = pKFi->fx;
                     e->fy = pKFi->fy;
                     e->cx = pKFi->cx;
@@ -710,6 +714,7 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
 
     }
 
+    //当优化完毕之后，有些帧就不适合当关键帧了，有些点也不适合作为MapPoint，所以要删除掉
     vector<pair<KeyFrame*,MapPoint*> > vToErase;
     vToErase.reserve(vpEdgesMono.size()+vpEdgesStereo.size());
 
@@ -951,6 +956,7 @@ void Optimizer::OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* p
         }
 
         // Covisibility graph edges
+        //返回权重小于 minFeat 的关键帧
         const vector<KeyFrame*> vpConnectedKFs = pKF->GetCovisiblesByWeight(minFeat);
         for(vector<KeyFrame*>::const_iterator vit=vpConnectedKFs.begin(); vit!=vpConnectedKFs.end(); vit++)
         {

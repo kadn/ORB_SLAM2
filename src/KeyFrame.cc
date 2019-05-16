@@ -187,13 +187,13 @@ vector<KeyFrame*> KeyFrame::GetCovisiblesByWeight(const int &w)
 
     if(mvpOrderedConnectedKeyFrames.empty())
         return vector<KeyFrame*>();
-
+    // upper_bound是 stl函数，指向  mvOrderedWeights中第一个大于w的元素，要求mvOrderedWeights有序
     vector<int>::iterator it = upper_bound(mvOrderedWeights.begin(),mvOrderedWeights.end(),w,KeyFrame::weightComp);
     if(it==mvOrderedWeights.end())
         return vector<KeyFrame*>();
     else
     {
-        int n = it-mvOrderedWeights.begin();
+        int n = it-mvOrderedWeights.begin();   // n就是不满足大于 w的关键帧数量，w是什么？？？
         return vector<KeyFrame*>(mvpOrderedConnectedKeyFrames.begin(), mvpOrderedConnectedKeyFrames.begin()+n);
     }
 }
@@ -341,6 +341,7 @@ void KeyFrame::UpdateConnections()
         if(mit->second>=th)
         {
             vPairs.push_back(make_pair(mit->second,mit->first));
+            //AddConnection 会更新 mConnectedKeyFrameWeights 的内容
             (mit->first)->AddConnection(this,mit->second);               //将相同关键点数量大于15的关键帧记作当前帧的一个连接, 保存在当前关键帧的 mConnectedKeyFrameWeights中
         }
     }
@@ -364,9 +365,9 @@ void KeyFrame::UpdateConnections()
         unique_lock<mutex> lockCon(mMutexConnections);
 
         // mspConnectedKeyFrames = spConnectedKeyFrames;
-        mConnectedKeyFrameWeights = KFcounter;                //这里有很多疑问？？？？？？为什么还要进行这个操作？？？？
-        mvpOrderedConnectedKeyFrames = vector<KeyFrame*>(lKFs.begin(),lKFs.end());
-        mvOrderedWeights = vector<int>(lWs.begin(), lWs.end());
+        mConnectedKeyFrameWeights = KFcounter;
+        mvpOrderedConnectedKeyFrames = vector<KeyFrame*>(lKFs.begin(),lKFs.end());  //mvpOrderedConnectedKeyFrames这个是最终需要的
+        mvOrderedWeights = vector<int>(lWs.begin(), lWs.end());   //mvOrderedWeights 这个也是 keyFrame需要的
 
         if(mbFirstConnection && mnId!=0)
         {
