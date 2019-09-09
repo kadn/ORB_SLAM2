@@ -25,4 +25,4 @@ lib/
 CameraTrajectory.txt
 debuginfo
 .idea
-
+.vscode
