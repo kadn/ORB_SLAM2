@@ -126,8 +126,8 @@ bool LoopClosing::DetectLoop()
     const vector<KeyFrame*> vpConnectedKeyFrames = mpCurrentKF->GetVectorCovisibleKeyFrames();
     const DBoW2::BowVector &CurrentBowVec = mpCurrentKF->mBowVec;
 
-    std::cout << "vpConnectedKeyFrames[0]->mvKeys.size() = " <<  vpConnectedKeyFrames[0]->mvKeys.size() << std::endl; //result : 2004 //不是定值
-    std::cout << " CurrentBowVec.size() = " << CurrentBowVec.size() << std::endl;   // result : 1966 //不是一个定值
+    // std::cout << "vpConnectedKeyFrames[0]->mvKeys.size() = " <<  vpConnectedKeyFrames[0]->mvKeys.size() << std::endl; //result : 2004 //不是定值
+    // std::cout << " CurrentBowVec.size() = " << CurrentBowVec.size() << std::endl;   // result : 1966 //不是一个定值
 
 
     float minScore = 1;
