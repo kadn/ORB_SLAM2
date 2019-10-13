@@ -1,0 +1,6 @@
+<launch>
+    <node name="Mono" pkg="ORB_SLAM2" type="Mono" output="screen" 
+        args="$(find ORB_SLAM2)/../../../Vocabulary/ORBvoc.bin $(find ORB_SLAM2)/../../Monocular/mindvision.yaml" >
+        <remap from="/camera/image_raw" to="/lvi/image/image/0" />
+    </node>
+</launch>
