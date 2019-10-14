@@ -1,0 +1,5 @@
+<launch>
+    <node name="Mono" pkg="ORB_SLAM2" type="RGBD" output="screen" 
+        args="$(find ORB_SLAM2)/../../../Vocabulary/ORBvoc.bin $(find ORB_SLAM2)/../../RGB-D/orbbec.yaml" >
+    </node>
+</launch>
