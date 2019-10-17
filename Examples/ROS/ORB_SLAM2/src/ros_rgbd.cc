@@ -29,21 +29,28 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
+#include <nav_msgs/Odometry.h>
 
 #include<opencv2/core/core.hpp>
 
 #include"../../../include/System.h"
+#include "../../../include/Converter.h"
 
 using namespace std;
 
 class ImageGrabber
 {
 public:
-    ImageGrabber(ORB_SLAM2::System* pSLAM):mpSLAM(pSLAM){}
+    ImageGrabber(ORB_SLAM2::System* pSLAM):mpSLAM(pSLAM), nh("~"){
+        odomPub = nh.advertise<nav_msgs::Odometry>("/odom_rgbd", 1);
+    }
 
     void GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const sensor_msgs::ImageConstPtr& msgD);
 
     ORB_SLAM2::System* mpSLAM;
+
+    ros::NodeHandle nh;
+    ros::Publisher odomPub;
 };
 
 int main(int argc, char **argv)
@@ -59,7 +66,7 @@ int main(int argc, char **argv)
     }    
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::RGBD,true);
+    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::RGBD);
 
     ImageGrabber igb(&SLAM);
 
@@ -75,9 +82,6 @@ int main(int argc, char **argv)
 
     // Stop all threads
     SLAM.Shutdown();
-
-    // Save camera trajectory
-    SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
 
     ros::shutdown();
 
@@ -109,7 +113,30 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
         return;
     }
 
-    mpSLAM->TrackRGBD(cv_ptrRGB->image,cv_ptrD->image,cv_ptrRGB->header.stamp.toSec());
+    cv::Mat T = mpSLAM->TrackRGBD(cv_ptrRGB->image,cv_ptrD->image,cv_ptrRGB->header.stamp.toSec());
+    //因为近似将摄像头竖直着放置，所以在这里先不考虑与地面对齐的情况
+    //这个xy似乎是跟摄像头的位置有关，odom应该是相对于车的坐标
+
+    std::cout << T << std::endl;
+
+    //缺少判断该变量是否ok的判断语句
+    if(0)
+    {    
+        nav_msgs::Odometry odom;
+        odom.header.stamp = ros::Time::now();
+        odom.header.frame_id = "odom_rgbd";
+        odom.pose.pose.position.x = -T.at<float>(0,3);
+        odom.pose.pose.position.y = -T.at<float>(1,3);
+
+        std::vector<float> q = ORB_SLAM2::Converter::toQuaternion(T);
+        odom.pose.pose.orientation.x = q[0];
+        odom.pose.pose.orientation.y = q[1];
+        odom.pose.pose.orientation.z = q[2];
+        odom.pose.pose.orientation.w = q[3];
+        odomPub.publish(odom);
+    }
+
+
 }
 
 
