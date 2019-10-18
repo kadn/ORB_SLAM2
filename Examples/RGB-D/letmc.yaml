@@ -16,11 +16,23 @@ Camera.p1: 0.00076003
 Camera.p2: -0.0059
 Camera.k3: 0
 
+Camera.width: 640
+Camera.height: 480
+
+# IR projector baseline times fx (aprox.)
+Camera.bf: 50.0
+
 # Camera frames per second 
 Camera.fps: 30.0
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 1
+
+# Close/Far threshold. Baseline times.
+ThDepth: 40.0
+
+# Deptmap values factor 
+DepthMapFactor: 50.
 
 #--------------------------------------------------------------------------------------------
 # ORB Parameters
