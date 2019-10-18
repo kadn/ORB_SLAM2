@@ -117,16 +117,17 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
     //因为近似将摄像头竖直着放置，所以在这里先不考虑与地面对齐的情况
     //这个xy似乎是跟摄像头的位置有关，odom应该是相对于车的坐标
 
-    std::cout << T << std::endl;
+    // std::cout << T << std::endl;
 
     //缺少判断该变量是否ok的判断语句
-    if(0)
+    if(!T.empty())
     {    
         nav_msgs::Odometry odom;
         odom.header.stamp = ros::Time::now();
         odom.header.frame_id = "odom_rgbd";
-        odom.pose.pose.position.x = -T.at<float>(0,3);
-        odom.pose.pose.position.y = -T.at<float>(1,3);
+        odom.pose.pose.position.x = T.at<float>(0,3);
+        odom.pose.pose.position.y = T.at<float>(1,3);
+        odom.pose.pose.position.y = T.at<float>(2,3);
 
         std::vector<float> q = ORB_SLAM2::Converter::toQuaternion(T);
         odom.pose.pose.orientation.x = q[0];
