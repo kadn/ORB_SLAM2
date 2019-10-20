@@ -113,23 +113,49 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
         return;
     }
 
-    cv::Mat T = mpSLAM->TrackRGBD(cv_ptrRGB->image,cv_ptrD->image,cv_ptrRGB->header.stamp.toSec());
+    cv::Mat Tcw = mpSLAM->TrackRGBD(cv_ptrRGB->image,cv_ptrD->image,cv_ptrRGB->header.stamp.toSec());
     //因为近似将摄像头竖直着放置，所以在这里先不考虑与地面对齐的情况
-    //这个xy似乎是跟摄像头的位置有关，odom应该是相对于车的坐标
+    cv::Mat Twc(4,4,CV_32F);
 
-    // std::cout << T << std::endl;
+    if(!Tcw.empty())
+    {
+        cv::Mat Rwc(3,3,CV_32F);
+        cv::Mat twc(3,1,CV_32F);
+        Rwc = Tcw.rowRange(0,3).colRange(0,3).t();
+        twc = -Rwc*Tcw.rowRange(0,3).col(3);
+        std::cout << "twc : " << twc << std::endl;
 
-    //缺少判断该变量是否ok的判断语句
-    if(!T.empty())
-    {    
+        Twc.at<float>(0,0) = Rwc.at<float>(0,0);
+        Twc.at<float>(0,1) = Rwc.at<float>(0,1);
+        Twc.at<float>(0,2) = Rwc.at<float>(0,2);
+
+        Twc.at<float>(1,0) = Rwc.at<float>(1,0);
+        Twc.at<float>(1,1) = Rwc.at<float>(1,1);
+        Twc.at<float>(1,2) = Rwc.at<float>(1,2);
+
+        Twc.at<float>(2,0) = Rwc.at<float>(2,0);
+        Twc.at<float>(2,1) = Rwc.at<float>(2,1);
+        Twc.at<float>(2,2) = Rwc.at<float>(2,2);
+
+        Twc.at<float>(0,3) = twc.at<float>(0,0);
+        Twc.at<float>(1,3) = twc.at<float>(1,0);
+        Twc.at<float>(2,3) = twc.at<float>(2,0);
+        
+        Twc.at<float>(3,0) = 0.0;
+        Twc.at<float>(3,1) = 0.0;
+        Twc.at<float>(3,2) = 0.0;
+        Twc.at<float>(3,3) = 1.0;
+        std::cout << "Tcw :" << endl << Tcw << endl;
+        std::cout << "Twc :" << endl << Twc << endl;
+   
         nav_msgs::Odometry odom;
         odom.header.stamp = ros::Time::now();
         odom.header.frame_id = "odom_rgbd";
-        odom.pose.pose.position.x = T.at<float>(0,3);
-        odom.pose.pose.position.y = T.at<float>(1,3);
-        odom.pose.pose.position.y = T.at<float>(2,3);
+        odom.pose.pose.position.x = Twc.at<float>(0,3);
+        odom.pose.pose.position.y = Twc.at<float>(1,3);
+        odom.pose.pose.position.z = Twc.at<float>(2,3);
 
-        std::vector<float> q = ORB_SLAM2::Converter::toQuaternion(T);
+        std::vector<float> q = ORB_SLAM2::Converter::toQuaternion(Twc);
         odom.pose.pose.orientation.x = q[0];
         odom.pose.pose.orientation.y = q[1];
         odom.pose.pose.orientation.z = q[2];
